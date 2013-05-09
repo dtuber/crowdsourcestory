@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>
+<head>
+<meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <style type="text/css">
+      html { height: 100% }
+      body { height: 100%; margin: 0; padding: 0 }
+      
+    </style>
+<title></title>
+<meta name="" content="">
+<script type="text/javascript" src="http://jqueryjs.googlecode.com/files/jquery-1.3.2.js"></script>
+<script type="text/javascript">
+    /* $("#submitNodeForm").submit(function(event){
+        var $form = $(this);
+        var $inputs = $form.find("input, select, button, textarea");
+        var serializedData = $form.serialize();
+        $inputs.prop("disabled", true);
+       
+        var request = $.ajax({
+            url: "http://acm.eecs.northwestern.edu:8083/submitNode?",
+            type: "post",
+            data: serializedData
+            });    
+        request.done(function (response, textStatus, jqXHR){
+            console.log("Hooray, it worked!");
+            });
+        request.fail(function (jqXHR, textSTatus, errorThrown){
+            console.error("The following error occurred: " + textStatus, errorThrown);
+            });
+        request.always(function() {
+            $inputs.prop("disabled", false);
+            });
+        });*/
+    </script>
+<script type="text/javascript">
+    var storyNum;
+    var textID;
+	function getStory(){
+		var xmlDoc;
+		storyNum = document.getElementsByName('testtext')[0].value;
+		document.getElementById('responseStuff').innerHTML = "About to get a story";
+        //alert(String(storyNum));
+        var data = {
+reqType: "getStory",
+         storyNum: 1
+        }
+        $.post('/submitNode?', data, function(response){
+		$('xmlDoc').html(response);
+		//alert("Load was performed.");
+	}, 'json');
+	document.getElementById('responseStuff').innerHTML = String(xmlDoc);
+    }
+    function submitNode(){
+        var xmlDoc;
+        var data = {
+reqType: "submitNode",
+         storyNum: 1,
+         textID: 1,
+         text: document.getElementsByName('storybox')[0].value
+        }
+        //data.serialze()
+        $.post('/submitNode?', data, function(data){
+                $('xmlDoc').html(data);
+                }, 'json');
+    }
+
+   </script>
+</head>
+<body>
+<div id="testbox"><input  type="text" name="testtext"/></div>
+<div id="testbutton" class="submitbutton"><input type="submit" onclick="getStory()" value="Testing"/></div>
+<br />
+<label id="responseStuff"></label>
+<br />
+
+<div id= "texttype"><input type="text" name="storybox"/></div>
+<div id="submitNode"><input type="submit" value="Submit Story" onclick="submitNode()"/></div>
+</form>
+</body>
+</html>
