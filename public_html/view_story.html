@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  
+  <head>
+    <title>new story page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="//netdna.boostrapcdn.com/twitter-boostrap/2.3/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function(){
+                var inputdata = {
+                    reqType: "getStory",
+                    storyNum: 2
+                    }
+                    var text;
+                    var outputdata = $.ajax({
+                        type: "POST",
+                        url: '/submitNode', 
+                        data: inputdata,
+                        datatype: 'json'
+                        });
+                    
+                    outputdata.done(function( data ){
+                        var content = $( data ).find( '#content' );
+                        //`:w
+                        //alert(data);
+                        $( "#storydiv" ).text( data );
+                        });
+                    //$("#storydiv #storyspan").text(text);
+                });
+    </script>
+  </head>
+  
+  <body>
+      <div id="storydiv"> 
+          <span id="storyspan">
+            <h1>Now Viewing story!</h1>
+                <p></p>
+            </span>
+    </div>
+  </body>
+
+</html>

@@ -19,14 +19,12 @@ class Story(Base):
     parentID = Column(Integer)
     textID = Column(Integer, primary_key = True)
     text = Column(String)
-    keyword=Column(String)
     
     def __init__(self, storyID, creatorID, parentID, text):
         self.storyID = storyID
         self.creatorID = creatorID
         self.parentID = parentID
         self.text = text
-        keyword=Column(String)
     
 
 class Creator(Base):
@@ -64,22 +62,27 @@ def getStory(storyID):
 
     return text
 
-def addNode(stID, pID, cID, words, keyword):
+def addNode(stID, pID, cID, words):
     #print "I'm adding a node to " + storyID + " after " + parentID + " written by " + creatorID + " containing " + text
-    while words
-    print "adding a story node"
-    first = words.pop()
-    from sqlalchemy.orm import sessionmaker
-    session = sessionmaker(bind=db)
-    Session = session()
-    newNode = Story(storyID = stID, parentID = pID, creatorID = cID, text = first, keyword=keyword)
-    Session.add(newNode)
-    Session.commit()
-    newNode = Session.query(Story).filter_by(storyID = stID, parentID = pID, creatorID = cID, text = first, keyword= keyword).first()
-    newRelation = ParentChild(parentID = pID, childID = newNode.textID)
-    Session.add(newRelation)
-    Session.commit()
-    return True;
+    if len(words) == 0:
+        print "Story has been stored!"
+        print pID
+        return True;
+    else:
+        from sqlalchemy.orm import sessionmaker
+        basicID = 0
+        first = words.pop()
+        session = sessionmaker(bind=db)
+        Session = session()
+        newNode = Story(storyID = stID, parentID = pID, creatorID = cID, text = first)
+        Session.add(newNode)
+        Session.commit()
+        newNode = Session.query(Story).filter_by(storyID = stID, parentID = pID, creatorID = cID, text = first).first()
+        basicID = newNode.textID
+        newRelation = ParentChild(parentID = pID, childID = newNode.textID)
+        Session.add(newRelation)
+        Session.commit()
+        addNode(stID, basicID, cID, words)
     
 class GetHandler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -102,6 +105,18 @@ class GetHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.end_headers()
                     self.wfile.write(data)
+            elif reqtype == 'new_story':
+                with open("/home/senortubes/public_html/new_story_page.html", "r") as myfile:
+                    data = myfile.read()
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(data)
+            elif reqtype == 'view_story':
+                with open("/home/senortubes/public_html/view_story.html", "r") as myfile:
+                    data = myfile.read()
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(data)
 
         except IOError:
             print "OOPSY DAISY"
@@ -117,30 +132,37 @@ class GetHandler(BaseHTTPRequestHandler):
                 length = int(self.headers.getheader('content-length'))
                 postvars = cgi.parse_qs(self.rfile.read(length), keep_blank_values=1)
             print postvars
-            reqtype = postvars['reqType']
+            reqtype = postvars['reqType'][0]
+            print reqtype
             if reqtype == 'getStory':
-                storyID = postvars['storyNum']
-                #print storyID
+                storyID = postvars['storyNum'][0]
+                print storyID
                 storynodes = getStory(storyID)
+                retval = ''.join([node for node in storynodes])
                 #for node in storynodes:
-                 #   print node
-
+                #    print node
+                print "got story!"
+                print retval
                 self.send_response(200)
                 self.end_headers()
-                self.wfile.write(storynodes)   
+                self.wfile.write(retval)   
             if reqtype == 'submitNode':
-                storyID = postvars['storyNum']
-                parentID = postvars['textID']
+                print "submitting node"
+                storyID = postvars['storyNum'][0]
+                parentID = postvars['initialID'][0]
                 creatorID = '1'
-                text = postvars['text']
+                text = postvars['text'][0]
                 import re
                 sentenceEnders = re.compile('[.!?]')
                 sentences = sentenceEnders.split(text)
-                for sentence in sentences:
-                    if addNode(storyID, parentID, creatorID, sentence) == False:
-                        print "READ IN PROBLEM"
-                        self.send_error(500, 'Internal Server Error: %s' % self.path)
-                    #print sentence
+                if addNode(storyID, parentID, creatorID, sentences) == False:
+                    print "READ IN PROBLEM"
+                    self.send_error(500, 'Internal Server Error: %s' % self.path)
+                print "Story has been stored!"
+                storynodes = getStory(storyID)
+                for node in storynodes:
+                    print node
+                #print sentence
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write("Committed successfully!")
