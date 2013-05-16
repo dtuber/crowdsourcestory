@@ -49,6 +49,18 @@ class ParentChild(Base):
 
 Base.metadata.create_all(db)
 
+class Node:
+    def __init__(self, textID, text, children):
+        self.textID = textID
+        self.text = text
+        self.children = children
+    def dict(self):
+        nodeDict = {}
+        nodeDict['textID'] = self.textID
+        nodeDict['text'] = self.text
+        nodeDict['children'] = self.children
+        return nodeDict
+
 def getStory(storyID):
     #print "I'm going to find this story: " + storyID
     print "finding story nodes"
@@ -57,14 +69,23 @@ def getStory(storyID):
     session = sessionmaker(bind=db)
     Session = session()
     results = Session.query(Story).filter_by(storyID = storyID).all()
+    
+    resultDict = {}
     for result in results:
-        children = ''
+        children = []
         child = Session.query(ParentChild).filter_by(parentID = result.textID).all()
         for things in child:
-            children+=str(things.childID)
-        text+=result.text + ': ' + children
-
-    return text
+                #print things[1]
+            children.append(things.childID)
+           
+            
+        newNode = Node(result.textID, result.text, children)
+        resultDict[str(result.textID)] = newNode.dict()
+    print resultDict
+    storyDict = {}
+    storyDict['name'] = storyID
+    storyDict['contents'] = resultDict
+    return storyDict
 
 def addNode(stID, pID, cID, words):
     #print "I'm adding a node to " + storyID + " after " + parentID + " written by " + creatorID + " containing " + text
@@ -142,15 +163,15 @@ class GetHandler(BaseHTTPRequestHandler):
                 storyID = postvars['storyNum'][0]
                 print storyID
                 storynodes = getStory(storyID)
-                retval = ''.join([node for node in storynodes])
+                #retval = ''.join([node for node in storynodes])
                 #for node in storynodes:
                 #    print node
                 print "got story!"
-                print retval
                 import json
+                print json.dumps(storynodes)
                 self.send_response(200)
                 self.end_headers()
-                self.wfile.write(json.dumps(retval))   
+                self.wfile.write(json.dumps(storynodes))   
             if reqtype == 'submitNode':
                 print "submitting node"
                 storyID = postvars['storyNum'][0]
