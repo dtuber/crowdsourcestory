@@ -39,9 +39,9 @@ class Creator(Base):
 
 class ParentChild(Base):
     __tablename__ = 'parent_child'
+    ID = Column(Integer, primary_key = True)
     parentID = Column(Integer)
     childID = Column(Integer)
-    ID = Column(Integer, primary_key = True)
     
     def __init__(self, parentID, childID):
         self.parentID = parentID
@@ -58,7 +58,11 @@ def getStory(storyID):
     Session = session()
     results = Session.query(Story).filter_by(storyID = storyID).all()
     for result in results:
-         text.append(result.text + '  ')
+        children = ''
+        child = Session.query(ParentChild).filter_by(parentID = result.textID).all()
+        for things in child:
+            children+=str(things.childID)
+        text+=result.text + ': ' + children
 
     return text
 
@@ -143,9 +147,10 @@ class GetHandler(BaseHTTPRequestHandler):
                 #    print node
                 print "got story!"
                 print retval
+                import json
                 self.send_response(200)
                 self.end_headers()
-                self.wfile.write(retval)   
+                self.wfile.write(json.dumps(retval))   
             if reqtype == 'submitNode':
                 print "submitting node"
                 storyID = postvars['storyNum'][0]
