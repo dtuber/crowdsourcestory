@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+  
+  <head>
+    <title>new story page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type">
+    <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
+
+    <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+
+
+    <script src="//netdna.boostrapcdn.com/twitter-boostrap/2.3/js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function(){
+        var storyNum;
+        var xmlDoc;
+        var initPost = {
+            reqType: "getStoryList"
+        }
+        var outputdata = $.ajax({
+                        type: "POST",
+                        url: '/submitNode', 
+                        data: initPost,
+                        async: false
+                        });
+        outputdata.done(function(response){
+                for (var item in response){
+                    item = parseInt(item);
+                    }
+                storyNum = response;    
+                });
+
+    alert(storyNum);
+    var counter = 0;
+    var storyTemp = storyNum.split(',');
+    var holder = [];
+    for (var thing in storyTemp){
+        if (counter == 0){
+            holder.push(storyTemp[counter].split('[')[1]);
+        }
+        else if (counter == storyTemp.length-1){
+            holder.push(storyTemp[counter].split(']')[1]);
+            }
+        else holder.push(storyTemp[counter].split(' ')[1]);
+        counter = counter + 1;
+
+    }
+    storyNum = holder
+    var iDiv = document.createElement('div');
+    iDiv.id = 'temp';
+    document.getElementsByTagName('body')[0].appendChild(iDiv)
+    for (var num in storyNum){
+        /*var a = document.createElement('a');
+        var linkText = document.createTextNode("Story "+num.toString());
+        a.appendChild(linkText);
+        a.title = "Story "+num.toString();
+        a.href = "http://acm.eecs.northwestern.edu:8083/view_story?"+num.toString();
+        iDiv.appendChild(a);*/
+        $('#linkdiv').append('<a href="http://acm.eecs.northwestern.edu:8083/playmockup?'+num.toString()+'">Story '+num.toString()+'!</a><br>');
+        //alert("appended a cell");
+    }
+    
+    /*$(".x").live('click', function(){
+            alert("you clicked on it!");
+            });*/
+    });
+    </script>
+  </head>
+  
+  <body>
+      <div class="container" name="thing">
+      <h1>New story!</h1>
+      
+      <label>Story List:</label>
+      <div id="linkdiv" name="linkdiv"> 
+        </div>
+    </div>
+  </body>
+
+</html>

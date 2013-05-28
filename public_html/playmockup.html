@@ -1,0 +1,92 @@
+<html>
+    <head>
+        <style>
+            #story { width: 500; height: 200; background: yellow;}
+        </style>
+        <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+        <script type="text/javascript">
+            var storynumReq = {
+            reqType: "getStoryNum"
+            }
+            var respData = $.ajax({
+                type: "POST",
+                url: '/submitNode',
+                data: storynumReq,
+                async: false
+            });
+            var storyNum;
+            respData.done( function(response){
+                storyNum = parseInt(response);
+            });
+
+            var indata = {reqType:"getStory", storyNum: storyNum};
+            var outdata = $.ajax({type:"POST", url:"/submitNode", data:indata, datatype:"json", async:false});
+            var textNodes;
+            outdata.done(function(data){textNodes=jQuery.parseJSON(data);});
+            var ids = Object.keys(textNodes.contents);
+            for (var j = 0; j < ids.length; j++){
+                ids[j] = parseInt(ids[j]);
+            }
+            ids.sort();
+            var id = [];
+            id.push(ids[0]);
+            /*$('body').click(function(event){
+                    alert("reached the handler");
+                    var temp = $.inArray(event.target.id);
+                    if(temp > 0) {
+                    id = textNodes.contents[temp].children;
+                    alert(temp);
+                        }
+
+                    });*/
+            function edit() {
+                window.location = "http://acm.eecs.northwestern.edu:8083/view_story?"+storyNum.toString();
+            }
+
+            function next(){
+                $('#story').empty();
+                //not yet checking for branching paths
+                
+
+                if (id.length > 0){
+                    for (var i = 0; i < id.length; i++){
+                        var a = document.createElement('div');
+                        var linkText = document.createTextNode(textNodes.contents[id[i]].text);
+                        a.id = id[i];
+                        a.appendChild(linkText);
+                        a.onclick = function() {
+                            id = textNodes.contents[a.id].children;
+                            next();
+                            }
+
+                        document.getElementById('story').appendChild(a);
+                        document.getElementById('story').appendChild(document.createElement('br'));
+                    }
+                }
+                else {
+                    var a = document.createElement('div');
+                    var linkText = document.createTextNode("The end");
+                    a.id = -1;
+                    a.appendChild(linkText);
+                    a.onclick = function() {
+                            window.location = "http://acm.eecs.northwestern.edu:8083/home";
+                    };
+                    document.getElementById('story').appendChild(a);
+                }
+            }
+                
+                
+        </script>
+    </head>
+    <body>
+        <div id='story' onclick='next();'>
+            CLICK TO BEGIN TEST
+            <div id='choicediv'>
+            </div>
+        </div>
+        <div id='editStory' onclick='edit();'>
+            Edit this story!
+        </div>
+    </body>
+</html>
+

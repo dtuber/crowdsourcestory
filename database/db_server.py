@@ -4,6 +4,8 @@ import urlparse
 import urllib2
 from bs4 import BeautifulSoup as bs
 from BaseHTTPServer import HTTPServer
+from cookielib import Cookie
+from cookielib import CookieJar
 import cgi, cgitb
 
 cgitb.enable()
@@ -71,9 +73,11 @@ def getStory(storyID):
     results = Session.query(Story).filter_by(storyID = storyID).all()
     
     resultDict = {}
+    parent = None
     for result in results:
         children = []
         child = Session.query(ParentChild).filter_by(parentID = result.textID).all()
+        print result.parentID
         for things in child:
                 #print things[1]
             children.append(things.childID)
@@ -81,22 +85,47 @@ def getStory(storyID):
             
         newNode = Node(result.textID, result.text, children)
         resultDict[str(result.textID)] = newNode.dict()
+        if result.parentID == 1:
+            parent = result
     print resultDict
     storyDict = {}
     storyDict['name'] = storyID
     storyDict['contents'] = resultDict
+    storyDict['root'] = Node(parent.textID, result.text, children).dict()
     return storyDict
+
+def getStoryList():
+    from sqlalchemy.orm import sessionmaker
+    session = sessionmaker(bind=db)
+    Session = session()
+    retList = []
+    storylist = Session.query(Story).all()
+    for item in storylist:
+        if item.storyID not in retList:
+            retList.append(item.storyID)
+    return retList
+
+def findLargestStoryID():
+    from sqlalchemy.orm import sessionmaker
+    session = sessionmaker(bind=db)
+    Session = session()
+    retval = 0
+    storylist = Session.query(Story).all()
+    for item in storylist:
+        if item.storyID > retval:
+            retval = item.storyID
+    return retval
 
 def addNode(stID, pID, cID, words):
     #print "I'm adding a node to " + storyID + " after " + parentID + " written by " + creatorID + " containing " + text
-    if len(words) == 0:
+    if words == '' or len(words) == 0:
         print "Story has been stored!"
         print pID
         return True;
     else:
         from sqlalchemy.orm import sessionmaker
         basicID = 0
-        first = words.pop()
+        first = words.pop(0)
         session = sessionmaker(bind=db)
         Session = session()
         newNode = Story(storyID = stID, parentID = pID, creatorID = cID, text = first)
@@ -108,8 +137,11 @@ def addNode(stID, pID, cID, words):
         Session.add(newRelation)
         Session.commit()
         addNode(stID, basicID, cID, words)
-    
-class GetHandler(BaseHTTPRequestHandler):
+
+
+            
+C = {}
+class GetHandler(BaseHTTPRequestHandler):    
     def do_OPTIONS(self):
         print "options!"
         self.send_response(200, "ok")
@@ -122,7 +154,13 @@ class GetHandler(BaseHTTPRequestHandler):
         try:
             parsed_path = urlparse.urlparse(self.path)
             reqtype = parsed_path.path.split('/')[1]
-            print reqtype
+            
+            storynum = parsed_path.query
+            host = self.client_address[0]
+            print host
+            C[str(host)]= storynum
+            #print "the additional args are: " +C[str(host)]
+            #print "the reqtype is " + reqtype
             if reqtype == 'samplepage':
                 with open("/home/senortubes/public_html/samplepage.html", "r") as myfile:
                     data = myfile.read()
@@ -142,6 +180,24 @@ class GetHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.end_headers()
                     self.wfile.write(data)
+            elif reqtype == 'home':
+                with open("/home/senortubes/public_html/home_page.html", "r") as myfile:
+                    data = myfile.read()
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(data)
+            elif reqtype == 'storylist':
+                with open("/home/senortubes/public_html/storylist.html", "r") as myfile:
+                    data = myfile.read()
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(data)
+            elif reqtype == 'playmockup':
+                with open("/home/senortubes/public_html/playmockup.html", "r") as myfile:
+                    data = myfile.read()
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(data)
 
         except IOError:
             print "OOPSY DAISY"
@@ -156,7 +212,6 @@ class GetHandler(BaseHTTPRequestHandler):
             elif ctype == 'application/x-www-form-urlencoded':
                 length = int(self.headers.getheader('content-length'))
                 postvars = cgi.parse_qs(self.rfile.read(length), keep_blank_values=1)
-            print postvars
             reqtype = postvars['reqType'][0]
             print reqtype
             if reqtype == 'getStory':
@@ -171,7 +226,25 @@ class GetHandler(BaseHTTPRequestHandler):
                 print json.dumps(storynodes)
                 self.send_response(200)
                 self.end_headers()
-                self.wfile.write(json.dumps(storynodes))   
+                self.wfile.write(json.dumps(storynodes))
+            if reqtype == 'getStoryNum':
+                host = self.client_address[0]
+                print "getting story number " + C[str(host)]
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(C[str(host)])
+            if reqtype == 'getLargestStory':
+                print "finding largest story"
+                retval = findLargestStoryID()
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(retval)
+            if reqtype == 'getStoryList':
+                print "getting story list"
+                retval = getStoryList()
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(retval)
             if reqtype == 'submitNode':
                 print "submitting node"
                 storyID = postvars['storyNum'][0]
@@ -181,6 +254,8 @@ class GetHandler(BaseHTTPRequestHandler):
                 import re
                 sentenceEnders = re.compile('[.!?]')
                 sentences = sentenceEnders.split(text)
+                useless = sentences.pop()
+                print sentences
                 if addNode(storyID, parentID, creatorID, sentences) == False:
                     print "READ IN PROBLEM"
                     self.send_error(500, 'Internal Server Error: %s' % self.path)
