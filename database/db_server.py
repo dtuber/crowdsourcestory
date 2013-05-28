@@ -198,6 +198,12 @@ class GetHandler(BaseHTTPRequestHandler):
                     self.send_response(200)
                     self.end_headers()
                     self.wfile.write(data)
+            elif reqtype == 'about':
+                with open("/home/senortubes/public_html/about.html", "r") as myfile:
+                    data = myfile.read()
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(data)
 
         except IOError:
             print "OOPSY DAISY"

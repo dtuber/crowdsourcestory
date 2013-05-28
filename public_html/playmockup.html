@@ -4,6 +4,8 @@
             #story { width: 500; height: 200; background: yellow;}
         </style>
         <script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+        <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.1/css/bootstrap-combined.min.css" rel="stylesheet">
+
         <script type="text/javascript">
             var storynumReq = {
             reqType: "getStoryNum"
@@ -79,6 +81,27 @@
         </script>
     </head>
     <body>
+        <div class="navbar">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="brand" href="#">StoryTime</a>
+          <div class="navbar-content">
+            <ul class="nav">
+              <li class="active">
+                <a href="http://acm.eecs.northwestern.edu:8083/home">Home</a> 
+              </li>
+              <li>
+                <a href="#">About</a> 
+              </li>
+              <li>
+                <a href="http://acm.eecs.northwestern.edu:8083/storylist">List of Stories</a> 
+              </li>
+            </ul>
+          </div>
+          <ul class="nav nav-tabs"></ul>
+        </div>
+      </div>
+    </div>
         <div id='story' onclick='next();'>
             CLICK TO BEGIN TEST
             <div id='choicediv'>
